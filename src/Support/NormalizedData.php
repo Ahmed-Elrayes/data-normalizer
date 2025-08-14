@@ -119,7 +119,9 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
         // Support escaping dots with a backslash: split on unescaped dots
         $segments = $this->splitKey($key);
         if (count($segments) === 1) {
-            return $this->items[$key] ?? $default;
+            // Support escaped single-segment keys (e.g., 'date\.upload')
+            $single = $this->unescape($segments[0]);
+            return $this->items[$single] ?? $default;
         }
 
         $current = $this;
@@ -137,7 +139,7 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
                 }
                 $current = $current[$segment];
             } elseif ($current instanceof Collection) {
-                if (!$current->has($segment)) {
+                if (!$current->has([$segment])) {
                     return $default;
                 }
                 $current = $current->get($segment);
@@ -233,7 +235,7 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
                 if (!array_key_exists($segment, $current)) return false;
                 $current = $current[$segment];
             } elseif ($current instanceof Collection) {
-                if (!$current->has($segment)) return false;
+                if (!$current->has([$segment])) return false;
                 $current = $current->get($segment);
             } else {
                 return false;
