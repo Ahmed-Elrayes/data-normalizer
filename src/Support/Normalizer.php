@@ -28,20 +28,18 @@ class Normalizer
      * @param mixed $value Any value to normalize.
      * @return NormalizedData|mixed NormalizedData for arrays/objects/collections; scalar/null otherwise.
      */
-    public function normalize(mixed $value)
+    public function normalize(mixed $value): mixed
     {
-        if ($value instanceof Collection) {
-            $array = $this->normalizeArray($value);
-            return new NormalizedData($array);
-        }
-
-        if (is_array($value)) {
+        if ($value instanceof Collection || is_array($value)) {
             $array = $this->normalizeArray($value);
             return new NormalizedData($array);
         }
 
         if (is_object($value)) {
             $array = $this->normalizeObject($value);
+            if (!is_array($array)) {
+                return $array;
+            }
             return new NormalizedData($array);
         }
 
@@ -60,12 +58,9 @@ class Normalizer
             $input = $input->all();
         }
 
-        $result = [];
-        foreach ($input as $key => $val) {
-            $result[$key] = $this->normalize($val);
-        }
-
-        return $result;
+        return array_map(function ($val) {
+            return $this->normalize($val);
+        }, $input);
     }
 
     /**
@@ -75,25 +70,27 @@ class Normalizer
      * those conversions are respected. Public properties are used otherwise.
      *
      * @param object $input The object to normalize.
-     * @return array<string|int, mixed>
+     * @return array<string|int, mixed>|mixed
      */
-    public function normalizeObject(object $input): array
+    public function normalizeObject(object $input): mixed
     {
         if ($input instanceof Arrayable) {
             $input = $input->toArray();
         } elseif ($input instanceof JsonSerializable) {
             $input = $input->jsonSerialize();
         } elseif ($input instanceof stdClass) {
-            $input = (array) $input;
+            $input = (array)$input;
         } else {
             $input = get_object_vars($input);
         }
 
-        $result = [];
-        foreach ($input as $key => $val) {
-            $result[$key] = $this->normalize($val);
+        if (!is_array($input)) {
+            return $input;
         }
-        return $result;
+
+        return array_map(function ($val) {
+            return $this->normalize($val);
+        }, $input);
     }
 
     /**
@@ -124,8 +121,8 @@ class Normalizer
         if (is_string($value)) {
             $trimmed = trim($value);
 
-            $treatEmpty = (bool) config('normalizer.treat_empty_string_as_null', true);
-            $treatWhitespaceAsEmpty = (bool) config('normalizer.treat_whitespace_as_empty', true);
+            $treatEmpty = (bool)config('normalizer.treat_empty_string_as_null', true);
+            $treatWhitespaceAsEmpty = (bool)config('normalizer.treat_whitespace_as_empty', true);
 
             if ($treatWhitespaceAsEmpty && $treatEmpty && trim($value) === '') {
                 return null;
@@ -135,8 +132,8 @@ class Normalizer
             }
 
             // Configurable N/A-like values
-            $mode = strtolower((string) config('normalizer.na_match_mode', 'compressed'));
-            $values = array_map(fn($v) => strtolower(trim((string) $v)), (array) config('normalizer.na_values', ['na','n/a','n a','n-a','n.a']));
+            $mode = strtolower((string)config('normalizer.na_match_mode', 'compressed'));
+            $values = array_map(fn($v) => strtolower(trim((string)$v)), (array)config('normalizer.na_values', ['na', 'n/a', 'n a', 'n-a', 'n.a']));
 
             $candidate = strtolower($trimmed);
             if ($mode === 'compressed') {
