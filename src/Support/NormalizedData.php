@@ -197,6 +197,30 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
     }
 
     /**
+     * Map the items to a new NormalizedData instance.
+     * Supports recursive mapping for nested NormalizedData instances.
+     *
+     * @param callable $callback
+     * @return self
+     */
+    public function map(callable $callback): self
+    {
+        $items = [];
+
+        foreach ($this->items as $key => $value) {
+            $mappedValue = $callback($value, $key);
+
+            if ($mappedValue instanceof self) {
+                $mappedValue = $mappedValue->map($callback);
+            }
+
+            $items[$key] = $mappedValue;
+        }
+
+        return new self($items);
+    }
+
+    /**
      * @return array[]
      */
     public function __debugInfo()

@@ -84,4 +84,53 @@ class NormalizedDataTest extends TestCase
         unset($data['a']);
         $this->assertFalse(isset($data['a']));
     }
+
+    public function test_map_functionality(): void
+    {
+        $data = new NormalizedData([
+            'item1' => 10,
+            'item2' => 20,
+            'nested' => ['a' => 1]
+        ]);
+
+        $mapped = $data->map(function ($value, $key) {
+            if (is_numeric($value)) {
+                return $value * 2;
+            }
+            return $value;
+        });
+
+        $this->assertInstanceOf(NormalizedData::class, $mapped);
+        $this->assertSame(20, $mapped['item1']);
+        $this->assertSame(40, $mapped['item2']);
+        $this->assertInstanceOf(NormalizedData::class, $mapped->get('nested'));
+        $this->assertSame(2, $mapped['nested.a']);
+
+        // returns new instance
+        $this->assertNotSame($data, $mapped);
+    }
+
+    public function test_recursive_map_functionality(): void
+    {
+        $data = new NormalizedData([
+            'a' => 1,
+            'b' => [
+                'c' => 2,
+                'd' => [
+                    'e' => 3
+                ]
+            ]
+        ]);
+
+        $mapped = $data->map(function ($value, $key) {
+            if (is_numeric($value)) {
+                return $value + 10;
+            }
+            return $value;
+        });
+
+        $this->assertSame(11, $mapped['a']);
+        $this->assertSame(12, $mapped['b.c']);
+        $this->assertSame(13, $mapped['b.d.e']);
+    }
 }
