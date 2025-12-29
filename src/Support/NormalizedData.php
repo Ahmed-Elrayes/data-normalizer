@@ -221,6 +221,83 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
     }
 
     /**
+     * Get the values of a given key.
+     *
+     * @param string $value
+     * @return self
+     */
+    public function pluck(string $value): self
+    {
+        $results = [];
+
+        foreach ($this->items as $item) {
+            if ($item instanceof self) {
+                $results[] = $item->get($value);
+            } elseif (is_array($item)) {
+                $results[] = (new self($item))->get($value);
+            }
+        }
+
+        return new self($results);
+    }
+
+    /**
+     * Return only unique items from the collection.
+     *
+     * @param string|callable|null $key
+     * @return self
+     */
+    public function unique(string|callable|null $key = null): self
+    {
+        if (is_null($key)) {
+            return new self(array_unique($this->items, SORT_REGULAR));
+        }
+
+        $callback = $this->valueRetriever($key);
+
+        $exists = [];
+
+        $results = [];
+
+        foreach ($this->items as $index => $item) {
+            $value = $callback($item);
+
+            if (!in_array($value, $exists, true)) {
+                $results[$index] = $item;
+
+                $exists[] = $value;
+            }
+        }
+
+        return new self($results);
+    }
+
+    /**
+     * Get a value retriever callback.
+     *
+     * @param callable|string|null $value
+     * @return callable
+     */
+    protected function valueRetriever(callable|string|null $value): callable
+    {
+        if (is_callable($value)) {
+            return $value;
+        }
+
+        return function ($item) use ($value) {
+            if ($item instanceof self) {
+                return $item->get($value);
+            }
+
+            if (is_array($item)) {
+                return (new self($item))->get($value);
+            }
+
+            return $item;
+        };
+    }
+
+    /**
      * @return array[]
      */
     public function __debugInfo()
