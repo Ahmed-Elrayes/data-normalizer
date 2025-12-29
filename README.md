@@ -92,6 +92,12 @@ The config/normalizer.php file supports:
 - `$data->toPrettyJson(): string` - Convert to pretty-printed JSON string.
 - `$data->all(): array` - Get the underlying items (one level).
 - `$data->map(callable $callback): NormalizedData` - Recursively map over the data.
+- `$data->pluck(string $key): NormalizedData` - Get the values of a given key.
+- `$data->unique(string|callable|null $key = null): NormalizedData` - Return only unique items.
+- `$data->sum(string|callable|null $key = null): mixed` - Sum the values of a given key.
+- `$data->avg(string|callable|null $key = null): mixed` - Get the average value of a given key.
+- `$data->max(string|callable|null $key = null): mixed` - Get the max value of a given key.
+- `$data->min(string|callable|null $key = null): mixed` - Get the min value of a given key.
 - `$data->count(): int` - Number of items in the top level.
 
 ## Author

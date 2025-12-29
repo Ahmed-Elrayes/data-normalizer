@@ -273,6 +273,99 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
     }
 
     /**
+     * Get the average value of a given key.
+     *
+     * @param callable|string|null $callback
+     * @return mixed
+     */
+    public function avg(callable|string|null $callback = null): mixed
+    {
+        $callback = $this->valueRetriever($callback);
+
+        $items = array_map($callback, $this->items);
+
+        $items = array_filter($items, function ($value) {
+            return !is_null($value);
+        });
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return array_sum($items) / count($items);
+    }
+
+    /**
+     * Alias for the "avg" method.
+     *
+     * @param callable|string|null $callback
+     * @return mixed
+     */
+    public function average(callable|string|null $callback = null): mixed
+    {
+        return $this->avg($callback);
+    }
+
+    /**
+     * Get the max value of a given key.
+     *
+     * @param callable|string|null $callback
+     * @return mixed
+     */
+    public function max(callable|string|null $callback = null): mixed
+    {
+        $callback = $this->valueRetriever($callback);
+
+        $items = array_map($callback, $this->items);
+
+        $items = array_filter($items, function ($value) {
+            return !is_null($value);
+        });
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return max($items);
+    }
+
+    /**
+     * Get the min value of a given key.
+     *
+     * @param callable|string|null $callback
+     * @return mixed
+     */
+    public function min(callable|string|null $callback = null): mixed
+    {
+        $callback = $this->valueRetriever($callback);
+
+        $items = array_map($callback, $this->items);
+
+        $items = array_filter($items, function ($value) {
+            return !is_null($value);
+        });
+
+        if (empty($items)) {
+            return null;
+        }
+
+        return min($items);
+    }
+
+    /**
+     * Sum the values of a given key.
+     *
+     * @param callable|string|null $callback
+     * @return mixed
+     */
+    public function sum(callable|string|null $callback = null): mixed
+    {
+        $callback = $this->valueRetriever($callback);
+
+        return array_sum(array_map($callback, $this->items));
+    }
+
+    /**
      * Get a value retriever callback.
      *
      * @param callable|string|null $value
