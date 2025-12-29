@@ -133,4 +133,84 @@ class NormalizedDataTest extends TestCase
         $this->assertSame(12, $mapped['b.c']);
         $this->assertSame(13, $mapped['b.d.e']);
     }
+
+    public function test_to_json_functionality(): void
+    {
+        $data = new NormalizedData([
+            'name' => 'John',
+            'age' => 30,
+            'nested' => ['key' => 'value']
+        ]);
+
+        $json = $data->toJson();
+        $this->assertJson($json);
+        $this->assertSame(json_encode(['name' => 'John', 'age' => 30, 'nested' => ['key' => 'value']]), $json);
+
+        // test with options
+        $jsonPretty = $data->toJson(JSON_PRETTY_PRINT);
+        $this->assertSame(json_encode(['name' => 'John', 'age' => 30, 'nested' => ['key' => 'value']], JSON_PRETTY_PRINT), $jsonPretty);
+
+        // test toPrettyJson
+        $this->assertSame($jsonPretty, $data->toPrettyJson());
+    }
+
+    public function test_all_method(): void
+    {
+        $items = ['a' => 1, 'b' => 2];
+        $data = new NormalizedData($items);
+        $this->assertSame($items, $data->all());
+    }
+
+    public function test_offset_exists_with_dot_notation(): void
+    {
+        $data = new NormalizedData([
+            'a' => ['b' => 1],
+            'c.d' => 2,
+        ]);
+
+        $this->assertTrue(isset($data['a.b']));
+        $this->assertTrue(isset($data['c.d']));
+        $this->assertTrue(isset($data['c\.d']));
+        $this->assertFalse(isset($data['a.c']));
+        $this->assertFalse(isset($data['x']));
+    }
+
+    public function test_offset_unset(): void
+    {
+        $data = new NormalizedData(['a' => 1, 'b' => 2]);
+        unset($data['a']);
+        $this->assertFalse(isset($data['a']));
+        $this->assertCount(1, $data);
+    }
+
+    public function test_to_object_deep(): void
+    {
+        $data = new NormalizedData([
+            'user' => [
+                'name' => 'John',
+                'tags' => ['php', 'laravel'],
+                'meta' => [
+                    'last_login' => '2023-01-01'
+                ]
+            ],
+            'items' => [
+                ['id' => 1, 'val' => 'a'],
+                ['id' => 2, 'val' => 'b'],
+            ]
+        ]);
+
+        $obj = $data->toObject();
+
+        $this->assertInstanceOf(\stdClass::class, $obj);
+        $this->assertInstanceOf(\stdClass::class, $obj->user);
+        $this->assertSame('John', $obj->user->name);
+        $this->assertIsArray($obj->user->tags);
+        $this->assertSame('php', $obj->user->tags[0]);
+        $this->assertInstanceOf(\stdClass::class, $obj->user->meta);
+        $this->assertSame('2023-01-01', $obj->user->meta->last_login);
+        
+        $this->assertIsArray($obj->items);
+        $this->assertInstanceOf(\stdClass::class, $obj->items[0]);
+        $this->assertSame(1, $obj->items[0]->id);
+    }
 }

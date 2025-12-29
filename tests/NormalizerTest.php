@@ -67,4 +67,26 @@ class NormalizerTest extends TestCase
         $this->assertSame('n a', $n->normalize('n a'));
         $this->assertNull($n->normalize('N/A'));
     }
+
+    public function test_normalize_array_method(): void
+    {
+        $n = new Normalizer();
+        $input = ['a' => '  trimmed  ', 'b' => 'n/a'];
+        $result = $n->normalizeArray($input);
+
+        $this->assertIsArray($result);
+        $this->assertSame('trimmed', $result['a']);
+        $this->assertNull($result['b']);
+    }
+
+    public function test_normalize_collection_method(): void
+    {
+        $n = new Normalizer();
+        $input = new Collection(['a' => '  trimmed  ', 'b' => 'n/a']);
+        $result = $n->normalizeCollection($input);
+
+        $this->assertInstanceOf(Collection::class, $result);
+        $this->assertSame('trimmed', $result->get('a'));
+        $this->assertNull($result->get('b'));
+    }
 }
