@@ -42,6 +42,10 @@ $y = $data['nested.y']; // 'value'
 
 // Escaping dot when the key contains a dot
 $upload2 = $data['date\.upload']; // '2024-01-01'
+
+// Convert back to JSON
+$json = $data->toJson();
+$prettyJson = $data->toPrettyJson();
 ```
 ### Class
 ```php
@@ -54,17 +58,7 @@ $data = $normalizer->normalize([
     'nested' => ['x' => 'n/a', 'y' => 'value'],
 ]);
 
-// Object-style
-$value = $data->item; // null
-
-// Array-style
-$upload = $data['date.upload']; // '2024-01-01' (exact key precedence)
-
-// Dot-notation for nested
-$y = $data['nested.y']; // 'value'
-
-// Escaping dot when the key contains a dot
-$upload2 = $data['date\.upload']; // '2024-01-01'
+// ... same as facade
 ```
 
 ## Configuration
@@ -86,9 +80,19 @@ The config/normalizer.php file supports:
 
 ## API
 
-- Normalizer::normalize(mixed $value): NormalizedData|mixed
-- Normalizer::normalizeArray(array|Collection $input): array
-- Normalizer::normalizeCollection(Collection $input): Collection
+### Normalizer
+- `Normalizer::normalize(mixed $value): NormalizedData|mixed`
+- `Normalizer::normalizeArray(array|Collection $input): array`
+- `Normalizer::normalizeCollection(Collection $input): Collection`
+
+### NormalizedData
+- `$data->toArray(): array` - Recursively convert to plain array.
+- `$data->toObject(): object` - Recursively convert to nested `stdClass` objects.
+- `$data->toJson(int $options = 0): string` - Convert to JSON string.
+- `$data->toPrettyJson(): string` - Convert to pretty-printed JSON string.
+- `$data->all(): array` - Get the underlying items (one level).
+- `$data->map(callable $callback): NormalizedData` - Recursively map over the data.
+- `$data->count(): int` - Number of items in the top level.
 
 ## Author
 

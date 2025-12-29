@@ -346,6 +346,27 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
     }
 
     /**
+     * Convert the object to its JSON representation.
+     *
+     * @param int $options
+     * @return string
+     */
+    public function toJson(int $options = 0): string
+    {
+        return json_encode($this->jsonSerialize(), $options);
+    }
+
+    /**
+     * Convert the object to its pretty JSON representation.
+     *
+     * @return string
+     */
+    public function toPrettyJson(): string
+    {
+        return $this->toJson(JSON_PRETTY_PRINT);
+    }
+
+    /**
      * Convert any value to an array recursively, preserving lists vs associative arrays.
      *
      * @param mixed $value
