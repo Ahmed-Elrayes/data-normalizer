@@ -37,8 +37,9 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
      * Create a new NormalizedData wrapper.
      *
      * @param array<string|int, mixed>|Collection|object|null $items Initial items or a collection/object convertible to an array
+     * @param bool $wrap
      */
-    public function __construct(array|object|null $items = null)
+    public function __construct(array|object|null $items = null, bool $wrap = true)
     {
         if ($items instanceof Collection) {
             $items = $items->all();
@@ -53,7 +54,10 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
                 $items = get_object_vars($items);
             }
         }
-        $this->items = $this->wrapNested($items ?? []);
+
+        $items = $items ?? [];
+
+        $this->items = $wrap ? $this->wrapNested($items) : $items;
     }
 
     /**
@@ -148,7 +152,7 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
             }
         }
 
-        return $this->wrap($current);
+        return $current;
     }
 
     /**
@@ -218,6 +222,64 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
         }
 
         return new self($items);
+    }
+
+    /**
+     * Chunk the items into multiple, smaller collections of a given size.
+     *
+     * @param int $size
+     * @param bool $preserveKeys
+     * @return static
+     */
+    public function chunk(int $size, bool $preserveKeys = true): static
+    {
+        if ($size <= 0) {
+            return new static([]);
+        }
+
+        $chunks = [];
+
+        foreach (array_chunk($this->items, $size, $preserveKeys) as $chunk) {
+            $chunks[] = new static($chunk);
+        }
+
+        return new static($chunks, false);
+    }
+
+    /**
+     * Chunk the items into multiple, smaller collections by a given key.
+     *
+     * @param callable|string $callback
+     * @return static
+     */
+    public function chunkByKey(callable|string $callback): static
+    {
+        $callback = $this->valueRetriever($callback);
+
+        $chunks = [];
+
+        if (empty($this->items)) {
+            return new static($chunks, false);
+        }
+
+        $currentChunk = [];
+        $lastKey = null;
+
+        foreach ($this->items as $key => $item) {
+            $currentKey = $callback($item, $key);
+
+            if ($lastKey !== null && $currentKey !== $lastKey) {
+                $chunks[] = new static($currentChunk);
+                $currentChunk = [];
+            }
+
+            $currentChunk[$key] = $item;
+            $lastKey = $currentKey;
+        }
+
+        $chunks[] = new static($currentChunk);
+
+        return new static($chunks, false);
     }
 
     /**
@@ -998,8 +1060,7 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
     public function offsetGet(mixed $offset): mixed
     {
         if (!is_string($offset) && !is_int($offset)) return null;
-        $value = $this->get((string)$offset);
-        return $this->toArrayValue($value);
+        return $this->get((string)$offset);
     }
 
     /**
