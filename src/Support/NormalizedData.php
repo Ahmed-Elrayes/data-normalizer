@@ -4,6 +4,7 @@ namespace Elrayes\Normalizer\Support;
 
 use ArrayAccess;
 use ArrayIterator;
+use BackedEnum;
 use Countable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
@@ -222,6 +223,103 @@ class NormalizedData implements Arrayable, ArrayAccess, IteratorAggregate, JsonS
         }
 
         return new self($items);
+    }
+
+    /**
+     * Map the items into a new class.
+     *
+     * @param string $class
+     * @return static
+     */
+    public function mapInto(string $class): static
+    {
+        if (is_subclass_of($class, BackedEnum::class)) {
+            return $this->map(fn ($value, $key) => $class::from($value));
+        }
+
+        return $this->map(fn ($value, $key) => new $class($value, $key));
+    }
+
+    /**
+     * Run a dictionary map over the items.
+     *
+     * The callback should return an associative array with a single key/value pair.
+     *
+     * @param callable $callback
+     * @return static
+     */
+    public function mapWithKeys(callable $callback): static
+    {
+        $result = [];
+
+        foreach ($this->items as $key => $value) {
+            $assoc = $callback($value, $key);
+
+            foreach ($assoc as $mapKey => $mapValue) {
+                $result[$mapKey] = $mapValue;
+            }
+        }
+
+        return new static($result);
+    }
+
+    /**
+     * Run a grouping map over the items.
+     *
+     * The callback should return an associative array with a single key/value pair.
+     *
+     * @param callable $callback
+     * @return static
+     */
+    public function mapToGroups(callable $callback): static
+    {
+        $groups = [];
+
+        foreach ($this->items as $key => $value) {
+            $pair = $callback($value, $key);
+
+            foreach ($pair as $groupKey => $groupValue) {
+                $groups[$groupKey][] = $groupValue;
+            }
+        }
+
+        return new static($groups);
+    }
+
+    /**
+     * Run a map over each nested chunk of items.
+     *
+     * @param callable $callback
+     * @return static
+     */
+    public function mapSpread(callable $callback): static
+    {
+        return $this->map(function ($chunk, $key) use ($callback) {
+            return $callback(...$chunk);
+        });
+    }
+
+    /**
+     * Run a dictionary map over the items.
+     *
+     * The callback should return an associative array with a single key/value pair.
+     *
+     * @param  callable  $callback
+     * @return static
+     */
+    public function mapToDictionary(callable $callback): static
+    {
+        $dictionary = [];
+
+        foreach ($this->items as $key => $value) {
+            $pair = $callback($value, $key);
+
+            foreach ($pair as $mapKey => $mapValue) {
+                $dictionary[$mapKey][] = $mapValue;
+            }
+        }
+
+        return new static($dictionary);
     }
 
     /**

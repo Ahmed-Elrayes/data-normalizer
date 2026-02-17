@@ -92,10 +92,18 @@ The config/normalizer.php file supports:
 - `$data->toPrettyJson(): string` - Convert to pretty-printed JSON string.
 - `$data->all(): array` - Get the underlying items (one level).
 - `$data->map(callable $callback): NormalizedData` - Recursively map over the data.
+- `$data->mapInto(string $class): static` - Map the items into a new class instance.
+- `$data->mapWithKeys(callable $callback): static` - Run a dictionary map over the items.
+- `$data->mapToGroups(callable $callback): static` - Run a grouping map over the items.
+- `$data->mapSpread(callable $callback): static` - Run a map over each nested chunk of items.
+- `$data->mapToDictionary(callable $callback): static` - Run a dictionary map over the items (similar to mapToGroups).
+- `$data->chunk(int $size, bool $preserveKeys = false): static` - Chunk the items into multiple, smaller collections of a given size.
+- `$data->chunkByKey(callable|string $callback): static` - Chunk the collection into smaller collections by a given key or callback.
 - `$data->pluck(string $key): NormalizedData` - Get the values of a given key.
 - `$data->unique(string|callable|null $key = null): NormalizedData` - Return only unique items.
 - `$data->sum(string|callable|null $key = null): mixed` - Sum the values of a given key.
 - `$data->avg(string|callable|null $key = null): mixed` - Get the average value of a given key.
+- `$data->average(string|callable|null $key = null): mixed` - Alias for avg.
 - `$data->max(string|callable|null $key = null): mixed` - Get the max value of a given key.
 - `$data->min(string|callable|null $key = null): mixed` - Get the min value of a given key.
 - `$data->count(?string $key = null, mixed $operator = null, mixed $value = null): int` - Number of items in the top level or matching criteria.
